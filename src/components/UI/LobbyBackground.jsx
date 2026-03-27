@@ -172,10 +172,5 @@ function FloatingChips() {
 
 // ─── Combined export ──────────────────────────────────────────────────────────
 export default function LobbyBackground() {
-  return (
-    <>
-      <GridGlow />
-      <FloatingChips />
-    </>
-  );
+  return <FloatingChips />;
 }
