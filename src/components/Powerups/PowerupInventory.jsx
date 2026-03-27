@@ -113,56 +113,53 @@ export default function PowerupInventory({ onShowGuide }) {
             onClick={() => setShowTargetPicker(null)}
           >
             <div
-              className="game-panel flex flex-col gap-3"
+              className="game-panel flex flex-col"
               style={{
-                padding: '24px 28px',
-                minWidth: 280,
-                maxWidth: 360,
-                width: '90%',
+                width: 300,
+                maxHeight: '75vh',
                 border: '1px solid rgba(255,68,68,0.6)',
                 boxShadow: '0 0 30px rgba(255,68,68,0.25)',
+                overflow: 'hidden',
               }}
               onClick={e => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="text-center">
+              {/* Fixed header */}
+              <div className="text-center shrink-0" style={{ padding: '16px 20px 12px' }}>
                 {activePowerup && (
-                  <div className="text-3xl mb-2">{activePowerup.icon}</div>
+                  <div className="text-2xl mb-1">{activePowerup.icon}</div>
                 )}
-                <div className="text-[8px] mb-1" style={{ color: '#ff4444', fontFamily: 'Press Start 2P' }}>
-                  ATTACK POWERUP
+                <div className="text-[8px]" style={{ color: '#ff4444', fontFamily: 'Press Start 2P' }}>
+                  {activePowerup?.name ?? 'ATTACK'}
                 </div>
-                {activePowerup && (
-                  <div className="text-[9px]" style={{ color: '#00bfff', fontFamily: 'Press Start 2P' }}>
-                    {activePowerup.name}
-                  </div>
-                )}
-                <div className="text-[7px] mt-2" style={{ color: '#aaa', fontFamily: 'Press Start 2P' }}>
+                <div className="text-[6px] mt-1" style={{ color: '#aaa', fontFamily: 'Press Start 2P' }}>
                   SELECT TARGET
                 </div>
               </div>
 
-              {/* Divider */}
-              <div style={{ borderTop: '1px solid rgba(255,68,68,0.25)' }} />
+              <div style={{ borderTop: '1px solid rgba(255,68,68,0.25)', margin: '0 16px' }} />
 
-              {/* Player list */}
-              <div className="flex flex-col gap-2">
+              {/* Scrollable player list */}
+              <div
+                className="flex flex-col gap-1.5 overflow-y-auto"
+                style={{ padding: '10px 16px', flex: 1 }}
+              >
                 {targets.map(t => (
                   <button
                     key={t.id}
                     onClick={() => handleTarget(t.id)}
-                    className="flex items-center justify-between rounded-lg transition-all"
+                    className="flex items-center justify-between rounded-lg"
                     style={{
-                      padding: '10px 14px',
+                      padding: '9px 12px',
                       background: 'rgba(255,68,68,0.06)',
                       border: '1px solid rgba(255,68,68,0.25)',
                       fontFamily: 'Press Start 2P',
                       cursor: 'pointer',
+                      flexShrink: 0,
                     }}
                     onMouseEnter={e => {
                       e.currentTarget.style.background = 'rgba(255,68,68,0.18)';
                       e.currentTarget.style.borderColor = 'rgba(255,68,68,0.7)';
-                      e.currentTarget.style.boxShadow = '0 0 12px rgba(255,68,68,0.3)';
+                      e.currentTarget.style.boxShadow = '0 0 10px rgba(255,68,68,0.3)';
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.background = 'rgba(255,68,68,0.06)';
@@ -176,25 +173,28 @@ export default function PowerupInventory({ onShowGuide }) {
                 ))}
               </div>
 
-              {/* Cancel */}
-              <button
-                onClick={() => setShowTargetPicker(null)}
-                className="rounded-lg transition-all"
-                style={{
-                  padding: '9px',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  color: '#888',
-                  fontFamily: 'Press Start 2P',
-                  fontSize: 8,
-                  cursor: 'pointer',
-                  marginTop: 2,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#ccc'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
-              >
-                CANCEL
-              </button>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', margin: '0 16px' }} />
+
+              {/* Fixed cancel */}
+              <div className="shrink-0" style={{ padding: '10px 16px' }}>
+                <button
+                  onClick={() => setShowTargetPicker(null)}
+                  className="w-full rounded-lg"
+                  style={{
+                    padding: '8px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#888',
+                    fontFamily: 'Press Start 2P',
+                    fontSize: 8,
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#ccc'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = '#888'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+                >
+                  CANCEL
+                </button>
+              </div>
             </div>
           </div>
         );
