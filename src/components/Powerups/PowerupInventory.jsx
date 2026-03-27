@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGame, applyPowerup } from '../../hooks/useGameState';
 import { usePvP } from '../../hooks/usePvPSync';
 import { sfx } from '../../utils/sounds';
@@ -103,13 +104,18 @@ export default function PowerupInventory({ onShowGuide }) {
         </div>
       )}
 
-      {/* Target picker — full-screen modal */}
+      {/* Target picker — portal to body so parent transforms don't offset it */}
       {showTargetPicker !== null && (() => {
         const activePowerup = player.powerups[showTargetPicker];
-        return (
+        return createPortal(
           <div
-            className="fixed inset-0 flex items-center justify-center z-[200]"
-            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(2px)' }}
+            style={{
+              position: 'fixed', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.80)',
+              backdropFilter: 'blur(2px)',
+              zIndex: 99999,
+            }}
             onClick={() => setShowTargetPicker(null)}
           >
             <div
@@ -196,7 +202,8 @@ export default function PowerupInventory({ onShowGuide }) {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         );
       })()}
     </div>
