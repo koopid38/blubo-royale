@@ -1,8 +1,8 @@
 // Auto-detect WebSocket URL: same host in production, localhost:3001 in dev
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 export const SERVER_URL = import.meta.env.VITE_WS_SERVER ||
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'ws://localhost:3001'
-    : `ws://${window.location.host}`);
+  (isLocal ? 'ws://localhost:3001' : `${wsProtocol}//${window.location.host}`);
 
 export const GAME_CONFIG = {
   STARTING_BANKROLL: 1000,
