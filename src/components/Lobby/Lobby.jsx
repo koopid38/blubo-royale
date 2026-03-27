@@ -1,13 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGame } from '../../hooks/useGameState';
 import BluboAvatar from '../UI/BluboAvatar';
 import FloatingPlus from '../UI/FloatingPlus';
 import PvPLobby from './PvPLobby';
 import luckyLogicLogo from '../../assets/Lucky_Logic.png';
 import { BLUBO_ICONS } from '../../utils/bluboIcons';
+import { sfx } from '../../utils/sounds';
 
 export default function Lobby() {
   const { dispatch } = useGame();
+
+  // Start lobby music; clean up when leaving lobby (game starts)
+  useEffect(() => {
+    sfx.startLobbyMusic();
+    return () => sfx.stopLobbyMusic();
+  }, []);
   const [playerName, setPlayerName] = useState('');
   const [selectedIcon, setSelectedIcon] = useState(0);
   const [hoveredBtn, setHoveredBtn] = useState(null);

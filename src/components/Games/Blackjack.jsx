@@ -76,7 +76,6 @@ export default function Blackjack() {
   };
 
   const handleStand = () => {
-    sfx.click();
     dealerPlay([...deck], [...dealerCards]);
   };
 
