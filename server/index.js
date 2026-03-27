@@ -296,6 +296,8 @@ function handleShowdownFlip(room) {
   room.showdownWinner = winnerId;
   broadcast(room, { type: 'phase_change', phase: 'showdown_result', winnerId });
 
+  // Client spin wheel takes 5.7s + 5s result display = ~11s
+  // Wait 13s before sending results phase to avoid interrupting the animation
   setTimeout(() => {
     eliminatePlayer(room, loserId);
     room.phase = 'results';
@@ -305,8 +307,8 @@ function handleShowdownFlip(room) {
     setTimeout(() => {
       rooms.delete(room.id);
       broadcastRoomList();
-    }, 30000);
-  }, 5000);
+    }, 60000);
+  }, 13000);
 }
 
 // ---- Powerup application on server ----

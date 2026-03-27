@@ -107,14 +107,15 @@ function gameReducer(state, action) {
     }
 
     case 'ELIMINATE_PLAYER': {
-      const alive = state.players.filter(p => !p.eliminated && p.id !== action.playerId);
       const players = state.players.map(p =>
         p.id === action.playerId ? { ...p, eliminated: true, eliminatedAt: Date.now(), expression: 'sad' } : p
       );
 
-      // Check if only 2 players remain
+      // Only auto-transition to showdown from the playing phase
       const alivePlayers = players.filter(p => !p.eliminated);
-      const newPhase = alivePlayers.length <= 2 ? GAME_PHASES.SHOWDOWN : state.phase;
+      const newPhase = (state.phase === GAME_PHASES.PLAYING && alivePlayers.length <= 2)
+        ? GAME_PHASES.SHOWDOWN
+        : state.phase;
 
       return { ...state, players, phase: newPhase };
     }

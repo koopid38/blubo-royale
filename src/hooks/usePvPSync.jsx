@@ -57,7 +57,13 @@ export function PvPProvider({ children }) {
         } else if (msg.phase === 'showdown_result') {
           dispatch({ type: 'PVP_SHOWDOWN_RESULT', winnerId: msg.winnerId });
         } else if (msg.phase === 'results') {
-          dispatch({ type: 'SET_PHASE', phase: 'results' });
+          // Only transition to results if we're not mid-showdown animation
+          // The Showdown component handles its own transition after the wheel stops
+          const currentState = stateRef.current;
+          if (currentState?.phase !== 'showdown') {
+            dispatch({ type: 'SET_PHASE', phase: 'results' });
+          }
+          // If in showdown, the Showdown component will dispatch SET_PHASE(RESULTS) itself
         }
         break;
 
