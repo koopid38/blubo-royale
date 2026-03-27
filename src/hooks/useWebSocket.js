@@ -7,9 +7,14 @@ export default function useWebSocket(serverUrl) {
   const [playerId, setPlayerId] = useState(null);
   const [lastMessage, setLastMessage] = useState(null);
   const reconnectAttempts = useRef(0);
-  const maxReconnects = 3;
+  const maxReconnects = 5;
   const intentionalClose = useRef(false);
   const onOpenCallbacks = useRef([]);
+
+  // Keep roomId/playerId in refs so reconnect logic can access them
+  // without depending on React state (which may be stale in the closure)
+  const roomIdRef = useRef(null);
+  const playerIdRef = useRef(null);
 
   const connect = useCallback((onOpen) => {
     intentionalClose.current = false;
@@ -34,6 +39,16 @@ export default function useWebSocket(serverUrl) {
       if (wsRef.current !== ws) return; // stale
       setConnected(true);
       reconnectAttempts.current = 0;
+
+      // If we have a room/player from a previous session, auto-rejoin
+      if (roomIdRef.current && playerIdRef.current) {
+        ws.send(JSON.stringify({
+          type: 'rejoin',
+          roomId: roomIdRef.current,
+          playerId: playerIdRef.current,
+        }));
+      }
+
       onOpenCallbacks.current.forEach(cb => cb());
       onOpenCallbacks.current = [];
     };
@@ -42,7 +57,9 @@ export default function useWebSocket(serverUrl) {
       if (wsRef.current !== ws) return; // stale
       try {
         const msg = JSON.parse(event.data);
-        if (msg.type === 'room_joined') {
+        if (msg.type === 'room_joined' || msg.type === 'rejoin_ok') {
+          roomIdRef.current = msg.roomId;
+          playerIdRef.current = msg.playerId;
           setRoomId(msg.roomId);
           setPlayerId(msg.playerId);
         }
@@ -75,6 +92,8 @@ export default function useWebSocket(serverUrl) {
       wsRef.current.close();
     }
     wsRef.current = null;
+    roomIdRef.current = null;
+    playerIdRef.current = null;
     setConnected(false);
     setRoomId(null);
     setPlayerId(null);

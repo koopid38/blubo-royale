@@ -288,7 +288,21 @@ function handleDisconnect(room, playerId, ws) {
 // ---- Attach WebSocket to HTTP server ----
 const wss = new WebSocketServer({ server: httpServer });
 
+// Ping/pong heartbeat — keeps connections alive through Render's proxy
+const HEARTBEAT_INTERVAL = 25000; // 25s (Render proxies typically timeout at 30-60s)
+const heartbeat = setInterval(() => {
+  wss.clients.forEach(ws => {
+    if (ws.isAlive === false) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, HEARTBEAT_INTERVAL);
+wss.on('close', () => clearInterval(heartbeat));
+
 wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
+
   let currentRoom = null;
   let currentPlayerId = null;
 
@@ -300,6 +314,24 @@ wss.on('connection', (ws) => {
       case 'list_rooms': {
         browsingSockets.add(ws);
         sendToWs(ws, { type: 'room_list', rooms: getOpenRooms() });
+        break;
+      }
+
+      // Rejoin an active game after reconnect
+      case 'rejoin': {
+        const room = rooms.get(msg.roomId);
+        if (!room) { sendToWs(ws, { type: 'error', message: 'Room no longer exists' }); return; }
+        const player = room.players.get(msg.playerId);
+        if (!player) { sendToWs(ws, { type: 'error', message: 'Player not found in room' }); return; }
+        // Re-associate the new WebSocket with the player
+        player.ws = ws;
+        currentRoom = room;
+        currentPlayerId = msg.playerId;
+        browsingSockets.delete(ws);
+        // Send current state so client is fully caught up
+        sendToWs(ws, { type: 'rejoin_ok', roomId: room.id, playerId: msg.playerId, phase: room.phase });
+        sendToWs(ws, stateSync(room));
+        console.log(`Player ${player.name} rejoined room ${room.id}`);
         break;
       }
       case 'host': {
