@@ -107,9 +107,11 @@ export default function PvPLobby({ playerName, iconIndex, onBack }) {
             </div>
           </div>
 
-          <div className="text-[7px] text-gray-400 text-center">
-            {players.length < GAME_CONFIG.MIN_PLAYERS
-              ? `Need at least ${GAME_CONFIG.MIN_PLAYERS} players to start`
+          <div className="text-[7px] text-center" style={{
+            color: players.length < 3 ? '#ff8844' : '#b8d767'
+          }}>
+            {players.length < 3
+              ? `Need ${3 - players.length} more player${3 - players.length === 1 ? '' : 's'} to start (min 3)`
               : 'Waiting for all players to ready up...'}
           </div>
 
@@ -124,8 +126,8 @@ export default function PvPLobby({ playerName, iconIndex, onBack }) {
             <button
               className={`game-btn text-[9px] px-6 py-3 ${isReady ? 'game-btn-red' : 'game-btn-green'}`}
               onClick={() => pvp.sendReady()}
-              disabled={!pvp.connected}
-              style={{ opacity: pvp.connected ? 1 : 0.5 }}
+              disabled={!pvp.connected || players.length < 3}
+              style={{ opacity: (pvp.connected && players.length >= 3) ? 1 : 0.4 }}
             >
               {isReady ? 'UNREADY' : 'READY'}
             </button>
