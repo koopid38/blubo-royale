@@ -61,9 +61,12 @@ export function PvPProvider({ children }) {
         }
         break;
 
-      case 'state_sync':
-        dispatch({ type: 'SYNC_PVP_STATE', ...msg });
+      case 'state_sync': {
+        // Destructure out msg.type to prevent it overwriting the action type
+        const { type: _, ...payload } = msg;
+        dispatch({ type: 'SYNC_PVP_STATE', ...payload });
         break;
+      }
 
       case 'player_eliminated':
         dispatch({ type: 'PVP_PLAYER_ELIMINATED', playerId: msg.playerId });
