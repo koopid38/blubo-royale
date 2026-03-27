@@ -13,10 +13,9 @@ export default function PvPLobby({ playerName, iconIndex, onBack }) {
   // Connect to server on mount for browsing
   useEffect(() => {
     pvp.connectAndBrowse();
-    return () => {
-      // Disconnect fully when leaving PvP lobby screen
-      pvp.disconnect();
-    };
+    // NOTE: Do NOT disconnect on unmount — the game transitioning to countdown/playing
+    // unmounts this component but the WebSocket must stay alive for state_sync.
+    // Disconnection is handled explicitly by BACK/LEAVE buttons.
   }, []);
 
   // When we get a roomId, we're in a room
