@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npx --yes create-vite@latest blubo-game --template react)",
+      "Bash(mv blubo-game/* blubo-game/.* .)",
+      "Bash(rm -rf blubo-game)",
+      "Bash(npm install:*)",
+      "Bash(npx vite:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(find C:UsersbenDocumentsGameJam/src -type f \\\\\\(-name *.jsx -o -name *.js \\\\\\))",
+      "Bash(timeout 3 node server/index.js)",
+      "Bash(netstat -ano)",
+      "Bash(powershell -Command \"Get-Content C:\\\\Windows\\\\System32\\\\drivers\\\\etc\\\\hosts | Select-String blubo\")",
+      "Bash(powershell -Command \"Start-Process cmd -Verb RunAs -ArgumentList ''/c echo 127.0.0.1 bluboroyale >> C:\\\\Windows\\\\System32\\\\drivers\\\\etc\\\\hosts''\")",
+      "Bash(xargs -I{} taskkill //PID {} //F)",
+      "Bash(npm run:*)",
+      "Bash(gh auth:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

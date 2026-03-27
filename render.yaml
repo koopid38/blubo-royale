@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: blubo-royale
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node server/serve.js
+    envVars:
+      - key: NODE_ENV
+        value: production
