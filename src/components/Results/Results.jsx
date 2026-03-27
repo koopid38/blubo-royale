@@ -1,4 +1,5 @@
 import { useGame } from '../../hooks/useGameState';
+import { usePvP } from '../../hooks/usePvPSync';
 import BluboAvatar from '../UI/BluboAvatar';
 import FloatingPlus from '../UI/FloatingPlus';
 
@@ -71,6 +72,15 @@ function PodiumSlot({ player, rank, prize, isHuman, delay }) {
 
 export default function Results() {
   const { state, dispatch } = useGame();
+  const pvp = usePvP();
+
+  const handleReturnToMenu = () => {
+    if (state.isPvP) {
+      pvp.leaveRoom();
+      pvp.disconnect();
+    }
+    dispatch({ type: 'RESET' });
+  };
 
   const alive = state.players.filter(p => !p.eliminated).sort((a, b) => b.bankroll - a.bankroll);
   const eliminated = state.players.filter(p => p.eliminated).sort((a, b) => (b.eliminatedAt || 0) - (a.eliminatedAt || 0));
@@ -148,9 +158,9 @@ export default function Results() {
         <div className="text-center fade-up" style={{ animationDelay: '700ms' }}>
           <button
             className="game-btn game-btn-green text-sm px-10 py-4"
-            onClick={() => dispatch({ type: 'RESET' })}
+            onClick={handleReturnToMenu}
           >
-            PLAY AGAIN
+            {state.isPvP ? 'RETURN TO MENU' : 'PLAY AGAIN'}
           </button>
         </div>
 
