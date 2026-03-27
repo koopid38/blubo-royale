@@ -3,6 +3,7 @@ import { useGame } from '../../hooks/useGameState';
 import { HORSES } from '../../utils/constants';
 import { simulateHorseRace } from '../../utils/gameLogic';
 import MysteryBox from '../Powerups/MysteryBox';
+import { sfx } from '../../utils/sounds';
 
 export default function Horses() {
   const { state, dispatch, checkPowerupDrop } = useGame();
@@ -24,6 +25,7 @@ export default function Horses() {
     dispatch({ type: 'RECORD_BET', playerId: player.id });
     setResult(null);
     setFrame(0);
+    sfx.raceStart();
 
     const data = simulateHorseRace(HORSES);
     setRaceData(data);
@@ -35,7 +37,12 @@ export default function Horses() {
     if (!racing || !raceData) return;
 
     const speed = 40; // ms per frame
+    let gallopFrame = 0;
     animRef.current = setInterval(() => {
+      gallopFrame++;
+      // Play hoof beat every 4 frames (~160ms) for a galloping rhythm
+      if (gallopFrame % 4 === 0) sfx.horseGallop();
+
       setFrame(prev => {
         const next = prev + 1;
         if (next >= raceData.totalFrames) {
@@ -45,10 +52,12 @@ export default function Horses() {
           if (won) {
             const winnings = Math.floor(state.minBet * HORSES[selectedHorse].odds);
             dispatch({ type: 'UPDATE_BANKROLL', playerId: player.id, amount: winnings });
+            sfx.win();
             dispatch({ type: 'SCREEN_SHAKE' });
             setTimeout(() => dispatch({ type: 'CLEAR_SHAKE' }), 400);
             setResult({ win: true, amount: winnings, winner: raceData.winner });
           } else {
+            sfx.lose();
             setResult({ win: false, amount: -state.minBet, winner: raceData.winner });
           }
           setRacing(false);

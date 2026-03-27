@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useGame } from '../../hooks/useGameState';
 import { createDeck, dealBlackjack, handValue, resolveBlackjack, isBlackjack } from '../../utils/gameLogic';
 import MysteryBox from '../Powerups/MysteryBox';
+import { sfx } from '../../utils/sounds';
 
 function Card({ card, faceDown = false, dealDelay = 0 }) {
   if (faceDown) {
@@ -44,6 +45,8 @@ export default function Blackjack() {
     if (!canBet || bet > player.bankroll) return;
     let d = deck.length < 15 ? createDeck() : [...deck];
     const dealt = dealBlackjack(d);
+    sfx.cardDeal();
+    setTimeout(() => sfx.cardDeal(), 200);
     setDealKey(k => k + 1);
     setDeck(dealt.deck);
     setPlayerCards(dealt.playerCards);
@@ -61,6 +64,7 @@ export default function Blackjack() {
   }, [canBet, bet, deck, player]);
 
   const handleHit = () => {
+    sfx.cardDeal();
     const d = [...deck];
     const newCards = [...playerCards, d.pop()];
     setDeck(d);
@@ -72,11 +76,13 @@ export default function Blackjack() {
   };
 
   const handleStand = () => {
+    sfx.click();
     dealerPlay([...deck], [...dealerCards]);
   };
 
   const handleDoubleDown = () => {
     if (player.bankroll < bet) return;
+    sfx.cardDeal();
     dispatch({ type: 'UPDATE_BANKROLL', playerId: player.id, amount: -bet });
     const d = [...deck];
     const newCards = [...playerCards, d.pop()];
@@ -130,6 +136,12 @@ export default function Blackjack() {
     } else if (finalPayout === 0 && res === 'push') {
       dispatch({ type: 'UPDATE_BANKROLL', playerId: player.id, amount: currentBet });
     }
+
+    if (res === 'blackjack') sfx.blackjackWin();
+    else if (res === 'bust') sfx.bust();
+    else if (res === 'push') sfx.push();
+    else if (finalPayout > 0) sfx.win();
+    else sfx.lose();
 
     setResult(res);
     setPayout(finalPayout);

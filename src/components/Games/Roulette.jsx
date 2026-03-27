@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGame } from '../../hooks/useGameState';
 import { spinRoulette, resolveRouletteBets } from '../../utils/gameLogic';
 import MysteryBox from '../Powerups/MysteryBox';
+import { sfx } from '../../utils/sounds';
 
 const BET_TYPES = [
   { type: 'red', label: 'RED', multiplier: 2, color: '#cc2222' },
@@ -29,6 +30,7 @@ export default function Roulette() {
 
   const addBet = (type, multiplier) => {
     if (!canBet || betAmount + totalBets > player.bankroll || betAmount < state.minBet) return;
+    sfx.betPlace();
     setBets([...bets, { type, amount: betAmount, multiplier }]);
   };
 
@@ -36,6 +38,7 @@ export default function Roulette() {
     const num = parseInt(numberBet);
     if (isNaN(num) || num < 0 || num > 36) return;
     if (!canBet || betAmount + totalBets > player.bankroll || betAmount < state.minBet) return;
+    sfx.betPlace();
     setBets([...bets, { type: 'number', number: num, amount: betAmount, multiplier: 35 }]);
     setNumberBet('');
   };
@@ -48,6 +51,7 @@ export default function Roulette() {
     dispatch({ type: 'RECORD_BET', playerId: player.id });
     dispatch({ type: 'SET_MID_HAND', midHand: true });
     setSpinning(true);
+    sfx.rouletteSpin();
 
     // Animate: show random numbers rapidly
     const spinDuration = 3000;
@@ -68,8 +72,11 @@ export default function Roulette() {
 
       if (totalPayout > 0) {
         dispatch({ type: 'UPDATE_BANKROLL', playerId: player.id, amount: totalPayout + totalBets });
+        sfx.win();
         dispatch({ type: 'SCREEN_SHAKE' });
         setTimeout(() => dispatch({ type: 'CLEAR_SHAKE' }), 400);
+      } else {
+        sfx.lose();
       }
 
       // Check for powerup drop

@@ -3,6 +3,7 @@ import { useGame } from '../../hooks/useGameState';
 import { SLOT_SYMBOLS } from '../../utils/constants';
 import { spinSlots } from '../../utils/gameLogic';
 import MysteryBox from '../Powerups/MysteryBox';
+import { sfx } from '../../utils/sounds';
 
 export default function Slots() {
   const { state, dispatch, checkPowerupDrop } = useGame();
@@ -23,6 +24,7 @@ export default function Slots() {
     dispatch({ type: 'RECORD_BET', playerId: player.id });
     setSpinning(true);
     setResult(null);
+    sfx.slotSpin();
 
     const outcome = spinSlots();
 
@@ -41,6 +43,7 @@ export default function Slots() {
       intervals.push(interval);
 
       setTimeout(() => {
+        sfx.reelStop();
         clearInterval(intervals[r]);
         setDisplayReels(prev => {
           const next = [...prev];
@@ -56,13 +59,16 @@ export default function Slots() {
             const winnings = Math.floor(state.minBet * outcome.multiplier);
             dispatch({ type: 'UPDATE_BANKROLL', playerId: player.id, amount: winnings + state.minBet });
             setResult({ win: true, amount: winnings, multiplier: outcome.multiplier });
+            outcome.multiplier >= 5 ? sfx.bigWin() : sfx.win();
             dispatch({ type: 'SCREEN_SHAKE' });
             setTimeout(() => dispatch({ type: 'CLEAR_SHAKE' }), 400);
           } else if (outcome.isPair) {
             dispatch({ type: 'UPDATE_BANKROLL', playerId: player.id, amount: state.minBet });
             setResult({ win: false, isPair: true, amount: 0 });
+            sfx.push();
           } else {
             setResult({ win: false, isPair: false, amount: -state.minBet });
+            sfx.lose();
           }
 
           // Check for powerup drop

@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { sfx } from '../../utils/sounds';
 
 export default function MysteryBox({ powerup, onClose }) {
   useEffect(() => {
+    sfx.powerupDrop();
     const timer = setTimeout(onClose, 3000);
     return () => clearTimeout(timer);
   }, [onClose]);

@@ -3,6 +3,7 @@ import { useGame } from '../../hooks/useGameState';
 import { PLINKO_MULTIPLIERS } from '../../utils/constants';
 import { dropPlinko } from '../../utils/gameLogic';
 import MysteryBox from '../Powerups/MysteryBox';
+import { sfx } from '../../utils/sounds';
 
 const ROWS = 16;
 const BOARD_WIDTH = 420;
@@ -45,6 +46,7 @@ export default function Plinko() {
       dispatch({ type: 'SET_MID_HAND', midHand: true });
     }
     activeBallCount.current += 1;
+    sfx.plinkoLaunch();
 
     const outcome = dropPlinko(ROWS);
     const id = ++ballIdRef.current;
@@ -57,16 +59,25 @@ export default function Plinko() {
     setBalls(prev => [...prev, { id, x: startPixel.x, y: startPixel.y, landed: false }]);
 
     let frameIdx = 0;
+    let lastRow = -1;
     const animate = () => {
       frameIdx += stepsPerFrame;
       const idx = Math.min(Math.floor(frameIdx), totalSteps - 1);
       const step = path[idx];
       const pixel = boardToPixel(step.x, step.y);
 
+      // Play a peg-hit tick each time the ball enters a new row
+      const currentRow = Math.floor(step.y * ROWS);
+      if (currentRow !== lastRow && currentRow > 0) {
+        lastRow = currentRow;
+        sfx.plinkoHit();
+      }
+
       if (idx >= totalSteps - 1) {
         // Ball landed
         const finalPixel = boardToPixel(path[totalSteps - 1].x, path[totalSteps - 1].y);
         setBalls(prev => prev.map(b => b.id === id ? { ...b, x: finalPixel.x, y: finalPixel.y, landed: true } : b));
+        sfx.plinkoLand(outcome.multiplier);
 
         const winnings = Math.floor(state.minBet * outcome.multiplier);
         if (winnings > 0) {

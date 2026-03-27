@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGame, applyPowerup } from '../../hooks/useGameState';
 import { usePvP } from '../../hooks/usePvPSync';
+import { sfx } from '../../utils/sounds';
 
 
 export default function PowerupInventory({ onShowGuide }) {
@@ -16,8 +17,10 @@ export default function PowerupInventory({ onShowGuide }) {
     if (!powerup) return;
 
     if (powerup.type === 'attack') {
+      sfx.powerupActivate();
       setShowTargetPicker(index);
     } else {
+      sfx.powerupActivate();
       dispatch({ type: 'REMOVE_POWERUP', playerId: player.id, index });
       if (state.isPvP && pvp) {
         pvp.sendUsePowerup(powerup.id, null);

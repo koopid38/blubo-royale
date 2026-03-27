@@ -3,6 +3,7 @@ import { useGame } from '../../hooks/useGameState';
 import { usePvP } from '../../hooks/usePvPSync';
 import { GAME_PHASES } from '../../utils/constants';
 import BluboAvatar from '../UI/BluboAvatar';
+import { sfx } from '../../utils/sounds';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function polarToXY(cx, cy, r, angleDeg) {
@@ -211,6 +212,7 @@ export default function Showdown() {
     const totalDeg = 8 * 360 + targetAngle;
 
     setPhase('spinning');
+    sfx.wheelSpin();
 
     // rAF-driven animation: guaranteed to animate every frame
     const startTime = performance.now();
@@ -226,6 +228,7 @@ export default function Showdown() {
       } else {
         // Spin complete
         animFrameRef.current = null;
+        sfx.fanfare();
         setFlash(true);
         setTimeout(() => setFlash(false), 600);
         setWinner(winnerPlayer);
@@ -257,6 +260,11 @@ export default function Showdown() {
       count--;
       setCountdown(count);
       setPulseIntensity(5 - count);
+      if (count <= 0) {
+        sfx.showdownTickFinal();
+      } else {
+        sfx.showdownTick();
+      }
       if (count <= 0) {
         clearInterval(interval);
         if (state.isPvP) {
