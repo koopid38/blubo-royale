@@ -3,6 +3,7 @@ import { useGame } from '../../hooks/useGameState';
 import { GAME_PHASES } from '../../utils/constants';
 import BluboAvatar from '../UI/BluboAvatar';
 import FloatingPlus from '../UI/FloatingPlus';
+import { sfx } from '../../utils/sounds';
 
 export default function Countdown() {
   const { state, dispatch } = useGame();
@@ -12,9 +13,11 @@ export default function Countdown() {
   // Local countdown timer — runs in both VS AI and PvP mode
   useEffect(() => {
     if (count <= 0) {
+      sfx.showdownTickFinal(); // launch sound on GO
       dispatch({ type: 'SET_PHASE', phase: GAME_PHASES.PLAYING });
       return;
     }
+    count === 1 ? sfx.showdownTickFinal() : sfx.showdownTick();
     const timer = setTimeout(() => setCount(c => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [count]);

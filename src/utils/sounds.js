@@ -410,16 +410,21 @@ export const sfx = {
     noise(0.03, 0.1, now);
   },
 
-  // Wheel spinning starts — whoosh + deceleration clicks
+  // Wheel spinning — dramatic build-up whoosh then audible deceleration ticks
   wheelSpin() {
     const c = getCtx(), now = c.currentTime;
-    // Initial whoosh
-    tone(80, 900, 'sawtooth', 0.1, 0.5, now);
-    noise(0.07, 0.6, now);
-    // Slowing click sequence in the last 2 seconds
-    [0, 0.18, 0.4, 0.66, 0.96, 1.3, 1.68, 2.1, 2.56].forEach((dt, i) => {
-      const f = 500 - i * 40;
-      tone(f, f * 0.7, 'square', 0.06, 0.06, now + 3.5 + dt);
+    // Launch whoosh: low → high sweep
+    tone(60, 1200, 'sawtooth', 0.14, 0.7, now);
+    noise(0.1, 0.8, now);
+    // Mid-spin hum that fades
+    tone(200, 150, 'sine', 0.08, 2.5, now + 0.5);
+    // Deceleration clicks — clearly audible, getting further apart as wheel slows
+    // Intervals: 0.10 0.13 0.17 0.22 0.28 0.36 0.46 0.58 0.72
+    const clickTimes = [0, 0.10, 0.23, 0.40, 0.62, 0.90, 1.26, 1.72, 2.30, 3.02];
+    clickTimes.forEach((dt, i) => {
+      const f = 480 - i * 35;
+      tone(f, f * 0.6, 'square', 0.12, 0.08, now + 2.5 + dt);
+      noise(0.04, 0.06, now + 2.5 + dt);
     });
   },
 
