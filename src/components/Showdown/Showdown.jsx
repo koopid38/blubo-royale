@@ -143,12 +143,16 @@ export default function Showdown() {
   const { state, dispatch } = useGame();
   const pvp = usePvP();
 
-  const [phase, setPhase] = useState('countdown'); // countdown | spinning | result
+  const [phase, setPhase] = useState('countdown'); // countdown | spinning | waiting | result
   const [countdown, setCountdown] = useState(5);
   const [winner, setWinner] = useState(null);
   const [currentRotation, setCurrentRotation] = useState(0);
   const [flash, setFlash] = useState(false);
   const [pulseIntensity, setPulseIntensity] = useState(0);
+
+  // Frozen fraction: locked at spin-start so the visual wheel always matches targetAngle
+  const [frozenP1Fraction, setFrozenP1Fraction] = useState(null);
+
   const flippedRef = useRef(false);
   const animFrameRef = useRef(null);
 
@@ -163,16 +167,32 @@ export default function Showdown() {
   const p1Chance = Math.round(p1Fraction * 100);
   const p2Chance = 100 - p1Chance;
 
+  // ── Live refs: always hold the latest values so stale-closure effects can read them ──
+  const liveP1FractionRef = useRef(p1Fraction);
+  const livePlayer1Ref = useRef(player1);
+  const livePlayer2Ref = useRef(player2);
+  liveP1FractionRef.current = p1Fraction;
+  livePlayer1Ref.current = player1;
+  livePlayer2Ref.current = player2;
+
   // ── Spin the wheel with JS-driven rAF animation ─────────────────────────
+  // Takes a snapshot of the live fraction at call time so visual and logic match.
   const spinWheel = useCallback((winnerPlayer) => {
     if (flippedRef.current) return;
     flippedRef.current = true;
 
-    const p1Deg = p1Fraction * 360;
+    // Snapshot the current fraction from live refs at the moment spin starts
+    const snapFraction = liveP1FractionRef.current;
+    const snapPlayer1 = livePlayer1Ref.current;
+
+    // Lock the visual wheel to this snapshot so SVG segments match our targetAngle
+    setFrozenP1Fraction(snapFraction);
+
+    const p1Deg = snapFraction * 360;
     const margin = 12;
 
     let targetAngle;
-    if (winnerPlayer.id === player1.id) {
+    if (winnerPlayer.id === snapPlayer1.id) {
       const safeRange = Math.max(p1Deg - 2 * margin, 1);
       targetAngle = margin + Math.random() * safeRange;
     } else {
@@ -206,7 +226,11 @@ export default function Showdown() {
     }
 
     animFrameRef.current = requestAnimationFrame(animate);
-  }, [p1Fraction, player1, player2]);
+  }, []); // No deps needed — uses live refs for snapshot, not stale closure values
+
+  // Keep a ref to the latest spinWheel so the countdown effect ([] deps) can call it
+  const spinWheelRef = useRef(spinWheel);
+  useEffect(() => { spinWheelRef.current = spinWheel; }, [spinWheel]);
 
   // Cleanup rAF on unmount
   useEffect(() => {
@@ -215,7 +239,8 @@ export default function Showdown() {
     };
   }, []);
 
-  // ── Auto-countdown then request flip ─────────────────────────────────────
+  // ── Auto-countdown then trigger spin ─────────────────────────────────────
+  // Uses refs so it always reads live p1Fraction / player1 / player2 at fire time
   useEffect(() => {
     let count = 5;
     setCountdown(count);
@@ -230,37 +255,51 @@ export default function Showdown() {
           pvp.sendRequestFlip();
           setPhase('waiting');
         } else {
+          // Read LIVE values via refs — not stale closure
+          const liveFraction = liveP1FractionRef.current;
+          const liveP1 = livePlayer1Ref.current;
+          const liveP2 = livePlayer2Ref.current;
           const roll = Math.random();
-          spinWheel(roll < p1Fraction ? player1 : player2);
+          spinWheelRef.current(roll < liveFraction ? liveP1 : liveP2);
         }
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── PvP: receive winner from server ──────────────────────────────────────
+  // Use live refs to find the player so we don't depend on stale closure values
   useEffect(() => {
     if (!state.isPvP || !state.pvpShowdownWinnerId) return;
-    const winnerPlayer = [player1, player2].find(p => p.id === state.pvpShowdownWinnerId);
-    if (winnerPlayer) spinWheel(winnerPlayer);
-  }, [state.pvpShowdownWinnerId]);
+    const liveP1 = livePlayer1Ref.current;
+    const liveP2 = livePlayer2Ref.current;
+    const winnerPlayer = [liveP1, liveP2].find(p => p.id === state.pvpShowdownWinnerId);
+    if (winnerPlayer) spinWheelRef.current(winnerPlayer);
+  }, [state.pvpShowdownWinnerId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── After result: transition to results screen ────────────────────────────
   useEffect(() => {
     if (phase !== 'result' || !winner) return;
     const timer = setTimeout(() => {
       if (!state.isPvP) {
-        const loser = [player1, player2].find(p => p.id !== winner.id);
+        const liveP1 = livePlayer1Ref.current;
+        const liveP2 = livePlayer2Ref.current;
+        const loser = [liveP1, liveP2].find(p => p.id !== winner.id);
         if (loser) dispatch({ type: 'ELIMINATE_PLAYER', playerId: loser.id });
       }
       dispatch({ type: 'SET_PHASE', phase: GAME_PHASES.RESULTS });
     }, 5000);
     return () => clearTimeout(timer);
-  }, [phase, winner]);
+  }, [phase, winner]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showWheel = phase === 'spinning' || phase === 'waiting' || phase === 'result';
   const isSpinning = phase === 'spinning';
+
+  // The fraction shown on the wheel: frozen during/after spin so it never jumps
+  const displayFraction = frozenP1Fraction !== null ? frozenP1Fraction : p1Fraction;
+  const displayP1Chance = Math.round(displayFraction * 100);
+  const displayP2Chance = 100 - displayP1Chance;
 
   return (
     <div
@@ -324,10 +363,10 @@ export default function Showdown() {
             </div>
             <div style={{
               fontSize: 14, marginTop: 4, fontFamily: 'Press Start 2P',
-              color: p1Chance >= 50 ? '#b8d767' : '#ff8844',
-              textShadow: `0 0 8px ${p1Chance >= 50 ? 'rgba(184,215,103,0.5)' : 'rgba(255,136,68,0.5)'}`,
+              color: displayP1Chance >= 50 ? '#b8d767' : '#ff8844',
+              textShadow: `0 0 8px ${displayP1Chance >= 50 ? 'rgba(184,215,103,0.5)' : 'rgba(255,136,68,0.5)'}`,
             }}>
-              {p1Chance}%
+              {displayP1Chance}%
             </div>
           </div>
 
@@ -383,7 +422,7 @@ export default function Showdown() {
                 <SpinWheel
                   player1={player1}
                   player2={player2}
-                  p1Fraction={p1Fraction}
+                  p1Fraction={displayFraction}
                   currentRotation={currentRotation}
                 />
               </div>
@@ -407,10 +446,10 @@ export default function Showdown() {
             </div>
             <div style={{
               fontSize: 14, marginTop: 4, fontFamily: 'Press Start 2P',
-              color: p2Chance >= 50 ? '#b8d767' : '#ff8844',
-              textShadow: `0 0 8px ${p2Chance >= 50 ? 'rgba(184,215,103,0.5)' : 'rgba(255,136,68,0.5)'}`,
+              color: displayP2Chance >= 50 ? '#b8d767' : '#ff8844',
+              textShadow: `0 0 8px ${displayP2Chance >= 50 ? 'rgba(184,215,103,0.5)' : 'rgba(255,136,68,0.5)'}`,
             }}>
-              {p2Chance}%
+              {displayP2Chance}%
             </div>
           </div>
         </div>
