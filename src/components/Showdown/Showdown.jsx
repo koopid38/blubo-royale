@@ -189,15 +189,23 @@ export default function Showdown() {
     setFrozenP1Fraction(snapFraction);
 
     const p1Deg = snapFraction * 360;
+    const p2Deg = 360 - p1Deg;
     const margin = 12;
 
+    // Rotation direction correction:
+    // rotate(totalDeg) clockwise means the segment at (360 - targetAngle) ends up under the pointer.
+    // Player 1's segment: [0, p1Deg]. Player 2's segment: [p1Deg, 360].
+    // To land pointer on player 1: (360 - targetAngle) ∈ [margin, p1Deg - margin]
+    //   → targetAngle ∈ [360 - p1Deg + margin, 360 - margin]
+    // To land pointer on player 2: (360 - targetAngle) ∈ [p1Deg + margin, 360 - margin]
+    //   → targetAngle ∈ [margin, p2Deg - margin]
     let targetAngle;
     if (winnerPlayer.id === snapPlayer1.id) {
       const safeRange = Math.max(p1Deg - 2 * margin, 1);
-      targetAngle = margin + Math.random() * safeRange;
+      targetAngle = (360 - p1Deg + margin) + Math.random() * safeRange;
     } else {
-      const safeRange = Math.max((360 - p1Deg) - 2 * margin, 1);
-      targetAngle = p1Deg + margin + Math.random() * safeRange;
+      const safeRange = Math.max(p2Deg - 2 * margin, 1);
+      targetAngle = margin + Math.random() * safeRange;
     }
 
     const totalDeg = 8 * 360 + targetAngle;
