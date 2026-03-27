@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useGame } from '../../hooks/useGameState';
 import BluboAvatar from '../UI/BluboAvatar';
 import FloatingPlus from '../UI/FloatingPlus';
-import LobbyBackground from '../UI/LobbyBackground';
 import PvPLobby from './PvPLobby';
 import luckyLogicLogo from '../../assets/Lucky_Logic.png';
 import { BLUBO_ICONS } from '../../utils/bluboIcons';
@@ -26,7 +25,6 @@ export default function Lobby() {
 
   return (
     <div className="min-h-screen grid-bg flex flex-col items-center justify-center relative overflow-hidden">
-      <LobbyBackground />
       <FloatingPlus />
 
       {/* Main content */}
